@@ -1,0 +1,44 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/order_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+# Base URL of the Product Service, injected via environment variable in Docker.
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+
+rabbitmq:
+  exchange: ${RABBITMQ_EXCHANGE:order-exchange}
+  queue: ${RABBITMQ_QUEUE:order-notification-queue}
+  routing-key: ${RABBITMQ_ROUTING_KEY:order.created}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
