@@ -1,0 +1,162 @@
+{
+  "info": {
+    "name": "SWST41062 E-commerce Microservices",
+    "description": "API tests for the Product, Order and Notification microservices. Follows the assignment's expected flow: create product -> get product -> delete product (optional) -> create order -> verify RabbitMQ message -> check notification logs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "productBaseUrl", "value": "http://localhost:8081" },
+    { "key": "orderBaseUrl", "value": "http://localhost:8082" },
+    { "key": "productId", "value": "" },
+    { "key": "orderId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Create Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.test('Response has productId', function () { pm.expect(json.productId).to.not.be.undefined; });",
+              "pm.collectionVariables.set('productId', json.productId);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Wireless Mouse\",\n  \"unitPrice\": 25.0,\n  \"description\": \"Ergonomic 2.4GHz wireless mouse\",\n  \"category\": \"Accessories\",\n  \"stock\": 100\n}"
+        },
+        "url": { "raw": "{{productBaseUrl}}/products", "host": ["{{productBaseUrl}}"], "path": ["products"] }
+      }
+    },
+    {
+      "name": "2. Get Product by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', function () { pm.response.to.have.status(200); });",
+              "var json = pm.response.json();",
+              "pm.test('Returns the correct product', function () { pm.expect(json.name).to.eql('Wireless Mouse'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{productBaseUrl}}/products/{{productId}}",
+          "host": ["{{productBaseUrl}}"],
+          "path": ["products", "{{productId}}"]
+        }
+      }
+    },
+    {
+      "name": "3. Create Order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.test('Total price = unitPrice * quantity (25 * 3 = 75)', function () { pm.expect(json.totalPrice).to.eql(75.0); });",
+              "pm.test('Product name resolved from Product Service', function () { pm.expect(json.productName).to.eql('Wireless Mouse'); });",
+              "pm.collectionVariables.set('orderId', json.orderId);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": 7,\n  \"productId\": {{productId}},\n  \"quantity\": 3\n}"
+        },
+        "url": { "raw": "{{orderBaseUrl}}/orders", "host": ["{{orderBaseUrl}}"], "path": ["orders"] }
+      }
+    },
+    {
+      "name": "4. Get Order by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{orderBaseUrl}}/orders/{{orderId}}",
+          "host": ["{{orderBaseUrl}}"],
+          "path": ["orders", "{{orderId}}"]
+        }
+      }
+    },
+    {
+      "name": "5. Delete Product (optional)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 204 No Content', function () { pm.response.to.have.status(204); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{productBaseUrl}}/products/{{productId}}",
+          "host": ["{{productBaseUrl}}"],
+          "path": ["products", "{{productId}}"]
+        }
+      }
+    },
+    {
+      "name": "6. Get Product After Delete (expect 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 404 Not Found', function () { pm.response.to.have.status(404); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{productBaseUrl}}/products/{{productId}}",
+          "host": ["{{productBaseUrl}}"],
+          "path": ["products", "{{productId}}"]
+        }
+      }
+    }
+  ]
+}
